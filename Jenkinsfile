@@ -32,3 +32,4 @@ pipeline {
                 "docker pull ${DOCKER_IMAGE} && \
                  docker stop my-app || true && \
                  docker rm my-app || true && \
+                 ssh ubuntu@your-server-ip "docker ps"

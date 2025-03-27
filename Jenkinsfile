@@ -12,7 +12,7 @@ pipeline {
     }
     post {
         success {
-            echo "Files deployed to EC2! - t1"
+            echo "Files deployed to EC2! - t2"
         }
         failure {
             echo "Deployment failed!"

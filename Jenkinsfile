@@ -1,41 +1,23 @@
 pipeline {
     agent any
-    environment {
-        DOCKER_IMAGE = "abhilashkalathil/webhook-cicd-app:latest"
-    }
     stages {
-        stage('Checkout Code') {
+        stage('Copy Files to EC2') {
             steps {
-                git branch: 'main', url: 'https://github.com/abhilashkalathil/webhooks-cicd.git'
-            }
-        }
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    docker.build("${DOCKER_IMAGE}")
+                sshagent(['ec2-deploy-key']) {  // Uses Jenkins SSH key
+                    sh 'scp -r * ubuntu@<EC2_IP>:/home/ubuntu/app/'
+                    sh 'ssh ubuntu@<EC2_IP> "ls -la /home/ubuntu/app/"'  // Verify
                 }
             }
         }
-        stage('Push to Docker Hub') {
-            steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-creds') {
-                        docker.image("${DOCKER_IMAGE}").push()
-                    }
-                }
-            }
+    }
+    post {
+        success {
+            echo "Files deployed to EC2!"
         }
-        stage('Deploy Container') {
-            steps {
-                sh """
-                ssh ubuntu@lab.myc-me.com \
-                "docker pull ${DOCKER_IMAGE} && \
-                 docker stop my-app || true && \
-                 docker rm my-app || true && \
-                 docker run -d --name my-app -p 80:81 ${DOCKER_IMAGE}"
-                """
-            }
+        failure {
+            echo "Deployment failed!"
         }
     }
 }
+
 
